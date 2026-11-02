@@ -124,6 +124,26 @@ input[type="search"] {
 .toc a:hover { background: color-mix(in srgb, var(--fg) 6%, transparent); }
 .toc a.current { border-left-color: var(--accent); color: var(--accent); font-weight: 600; background: var(--accent-soft); }
 .toc a.dead { color: var(--muted); cursor: default; }
+.toc a.contains-current { border-left-color: var(--accent); color: var(--accent); }
+
+/* Parts with chapters: a disclosure arrow in the left gutter */
+.toc li { position: relative; }
+.toc.nested a { padding-left: 28px; }
+.toc.nested li.has-children > a.dead { cursor: pointer; color: inherit; }
+.toc li.collapsed > ol { display: none; }
+.toc-toggle {
+  position: absolute; left: 5px; top: 4px; width: 20px; height: 22px; padding: 0;
+  border: 0; color: var(--muted); display: flex; align-items: center; justify-content: center;
+}
+.toc-toggle::before {
+  content: ""; border: 4.5px solid transparent; border-top: 6px solid currentColor; border-bottom: 0;
+  transition: transform .15s;
+}
+.toc li.collapsed > .toc-toggle::before { transform: rotate(-90deg); }
+.toc-toggle:hover { color: var(--fg); background: none; }
+.toc-bar { display: flex; gap: 6px; padding: 0 12px 8px; }
+.toc-bar button { font-size: 12px; padding: 1px 8px; color: var(--muted); }
+.toc-bar button:hover { color: var(--fg); }
 
 .bm-form { display: flex; gap: 6px; padding: 4px 12px 10px; }
 .bm-form input { flex: 1; }

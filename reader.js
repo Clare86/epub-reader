@@ -216,6 +216,7 @@ async function openFile(file, name) {
 
   const pos = state.data.pos;
   await show(settings.mode, pos ? { ch: pos.ch, p: pos.p } : { ch: 0, p: 0 });
+  highlightToc(pos ? pos.ch : 0, { reveal: true });
   if (pos && (pos.ch || pos.p)) toast(`Resumed at ${book.spine[pos.ch] ? book.spine[pos.ch].title : 'saved position'}`);
   countChapterWords();
 }
@@ -342,20 +343,57 @@ function buildToc() {
       a.append(label);
       a.href = '#';
       if (t.spineIndex < 0) a.classList.add('dead');
+      const parent = t.children.length > 0;
       a.addEventListener('click', (e) => {
         e.preventDefault();
-        if (t.spineIndex < 0) return;
+        // A part with no page of its own just opens or closes.
+        if (t.spineIndex < 0) { if (parent) setTocOpen(li, li.classList.contains('collapsed')); return; }
+        if (parent) setTocOpen(li, true);
         goTo({ ch: t.spineIndex, id: t.frag ? `c${t.spineIndex}-${t.frag}` : null });
         if (window.matchMedia('(max-width: 760px)').matches) setSidebar(false);
       });
       li.append(a);
-      state.tocLinks.push({ a, spineIndex: t.spineIndex, depth });
-      if (t.children.length) li.append(build(t.children, depth + 1));
+      state.tocLinks.push({ a, li, spineIndex: t.spineIndex, depth });
+      if (parent) {
+        const toggle = document.createElement('button');
+        toggle.className = 'toc-toggle';
+        toggle.addEventListener('click', () => setTocOpen(li, li.classList.contains('collapsed')));
+        li.prepend(toggle);
+        li.append(build(t.children, depth + 1));
+      }
       ol.append(li);
     }
     return ol;
   };
-  nav.append(build(state.book.toc, 0));
+  const tree = build(state.book.toc, 0);
+  const nested = state.book.toc.some(t => t.children.length);
+  nav.classList.toggle('nested', nested);
+  if (nested) {
+    // Parts start closed; the one being read is opened once the position is known.
+    const bar = document.createElement('div');
+    bar.className = 'toc-bar small';
+    for (const [text, open] of [['Expand all', true], ['Collapse all', false]]) {
+      const b = document.createElement('button');
+      b.textContent = text;
+      b.addEventListener('click', () => {
+        nav.querySelectorAll('li.has-children').forEach(li => setTocOpen(li, open));
+        if (state.pos) highlightToc(state.pos.ch);
+      });
+      bar.append(b);
+    }
+    nav.append(bar);
+    tree.querySelectorAll('li').forEach(li => { if (li.querySelector(':scope > ol')) { li.classList.add('has-children'); setTocOpen(li, false); } });
+  }
+  nav.append(tree);
+}
+
+function setTocOpen(li, open) {
+  li.classList.toggle('collapsed', !open);
+  const t = li.querySelector(':scope > .toc-toggle');
+  t.setAttribute('aria-expanded', open);
+  t.setAttribute('aria-label', open ? 'Collapse' : 'Expand');
+  t.title = open ? 'Hide chapters' : 'Show chapters';
+  if (state.pos && li.isConnected) highlightToc(state.pos.ch);
 }
 
 // Counts the words in every spine item, then labels each contents entry
@@ -369,39 +407,67 @@ async function countChapterWords() {
   if (state.book !== book) return;
   state.words = parts.map(c => c.words);
   const links = state.tocLinks;
+  // Where each entry starts: its own file, or for a part with no page of
+  // its own, its first chapter's file.
+  const starts = links.map((l, i) => {
+    if (l.spineIndex >= 0) return l.spineIndex;
+    for (let j = i + 1; j < links.length && links[j].depth > l.depth; j++) if (links[j].spineIndex >= 0) return links[j].spineIndex;
+    return -1;
+  });
   links.forEach((l, i) => {
     const s = l.spineIndex;
     if (s < 0) return;
     let end = book.spine.length;
     for (let j = i + 1; j < links.length; j++) {
-      const o = links[j];
-      if (o.depth > l.depth || o.spineIndex < 0) continue;
-      if (o.spineIndex === s) { if (o.depth === l.depth) return; continue; }
-      if (o.spineIndex > s) { end = o.spineIndex; break; }
+      const o = links[j], os = starts[j];
+      if (o.depth > l.depth || os < 0) continue;
+      if (os === s) { if (o.depth === l.depth) return; continue; }
+      if (os > s) { end = os; break; }
     }
     if (links.some((o, j) => j < i && o.depth === l.depth && o.spineIndex === s)) return;
-    const words = state.words.slice(s, end).reduce((a, b) => a + b, 0);
-    if (!words) return;
+    l.words = state.words.slice(s, end).reduce((a, b) => a + b, 0);
+  });
+  // A part with no page of its own totals its chapters (innermost first).
+  for (const l of [...links].reverse()) {
+    if (l.spineIndex >= 0 || !l.li.classList.contains('has-children')) continue;
+    const kids = links.filter(o => o.li.parentElement.closest('li') === l.li);
+    if (kids.every(o => o.words != null)) l.words = kids.reduce((a, o) => a + o.words, 0);
+  }
+  for (const l of links) {
+    if (!l.words) continue;
     const span = document.createElement('span');
     span.className = 'toc-words';
-    span.textContent = words.toLocaleString();
-    span.title = `${words.toLocaleString()} words`;
+    span.textContent = l.words.toLocaleString();
+    span.title = `${l.words.toLocaleString()} words`;
     l.a.append(span);
-  });
+  }
   if (state.rendered === 'chapter') updateChapterNav();
   onScroll(); // recalculate progress by words
 }
 
-function highlightToc(ch) {
+// Highlights the entry for chapter ch: an exact match (the deepest, so a
+// part's first chapter wins over the part), else the nearest one before it.
+// If that entry is inside a closed part, the part is marked instead.
+// reveal opens the parts around it.
+function highlightToc(ch, { reveal = false } = {}) {
   let best = null;
   for (const l of state.tocLinks) {
-    if (l.spineIndex === ch) { best = l; break; }
-    if (l.spineIndex >= 0 && l.spineIndex < ch && (!best || l.spineIndex >= best.spineIndex)) best = l;
+    if (l.spineIndex === ch) { if (!best || best.spineIndex !== ch || l.depth > best.depth) best = l; continue; }
+    if (l.spineIndex >= 0 && l.spineIndex < ch && (!best || (best.spineIndex !== ch && l.spineIndex >= best.spineIndex))) best = l;
   }
-  for (const l of state.tocLinks) l.a.classList.toggle('current', l === best);
-  if (best && !$('toc').hidden) {
-    const r = best.a.getBoundingClientRect(), pr = $('toc').getBoundingClientRect();
-    if (r.top < pr.top || r.bottom > pr.bottom) best.a.scrollIntoView({ block: 'center' });
+  let shown = best;
+  for (let li = best && best.li.parentElement.closest('li'); li; li = li.parentElement.closest('li')) {
+    if (!li.classList.contains('collapsed')) continue;
+    if (reveal) setTocOpen(li, true);
+    else shown = state.tocLinks.find(l => l.li === li);
+  }
+  for (const l of state.tocLinks) {
+    l.a.classList.toggle('current', l === best && l === shown);
+    l.a.classList.toggle('contains-current', l === shown && l !== best);
+  }
+  if (shown && !$('toc').hidden) {
+    const r = shown.a.getBoundingClientRect(), pr = $('toc').getBoundingClientRect();
+    if (r.top < pr.top || r.bottom > pr.bottom) shown.a.scrollIntoView({ block: 'center' });
   }
 }
 

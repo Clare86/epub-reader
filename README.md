@@ -32,7 +32,7 @@ The app isn't signed, so macOS may block it the first time it's opened after dow
 
 ## Features
 
-- **Contents sidebar**: built from the book's own table of contents. The current chapter is highlighted, and each entry shows its word count. A part's count includes its chapters. In chapter view, the word count also appears at the foot of the chapter.
+- **Contents sidebar**: built from the book's own table of contents. The current chapter is highlighted, and each entry shows its word count. In books divided into parts, the parts can be collapsed so only their names show. They start collapsed, except the part you're reading, and Expand all / Collapse all buttons appear at the top. A part's count includes its chapters. In chapter view, the word count also appears at the foot of the chapter.
 - **Chapter or whole story**: read one chapter at a time, or the whole story as one continuous scroll. Switching between them keeps your place.
 - **Automatic resume**: your position is saved as you read, down to the paragraph. Reopening the book, or reloading the page, takes you straight back.
 - **Progress by words**: the percentage read is the words before your position out of the book's total, so long and short chapters count fairly and both views agree.
