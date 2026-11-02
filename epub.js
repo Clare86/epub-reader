@@ -76,6 +76,13 @@ const CALIBRE_LABELS = {
   'calibre:title_sort': 'Title (sort)', 'calibre:author_sort': 'Author (sort)',
 };
 
+const DCTERMS_LABELS = {
+  'dcterms:date': 'Published', 'dcterms:issued': 'Published', 'dcterms:created': 'File created',
+  'dcterms:modified': 'Modified', 'dcterms:extent': 'Length',
+};
+// Internal bookkeeping that isn't useful to a reader.
+const HIDDEN_META = new Set(['cover', 'calibre:link_maps']);
+
 function formatDate(s) {
   const d = new Date(s);
   if (!s || isNaN(d)) return s;
@@ -88,10 +95,12 @@ function stars(v) {
   return n > 0 ? '★'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n)) : '';
 }
 
-// calibre custom columns are stored as JSON describing the column and its value.
+// calibre custom columns are stored as JSON describing the column and its value
+// (a string in EPUB 2, already-parsed objects inside the EPUB 3 combined form).
 function addCalibreColumn(add, key, json) {
-  let col;
-  try { col = JSON.parse(json); } catch (_) { return; }
+  let col = json;
+  if (typeof col === 'string') { try { col = JSON.parse(col); } catch (_) { return; } }
+  if (!col || typeof col !== 'object') return;
   const label = col.name || key;
   const v = col['#value#'];
   if (v == null || v === '' || (Array.isArray(v) && !v.length)) return;
@@ -287,20 +296,33 @@ class EpubBook {
     if (!md) return [];
     // Old OPF files nest fields in <dc-metadata>/<x-metadata>.
     const els = Array.from(md.children).flatMap(el => /^(dc|x)-metadata$/.test(el.localName) ? Array.from(el.children) : [el]);
+
+    // EPUB 3 "refines" metas describe another element (its role, sort name, …)
+    // rather than being fields themselves. Keep the roles; skip the rest.
+    const refinedRoles = new Map();
+    for (const el of els) {
+      const target = el.localName === 'meta' && el.getAttribute('refines');
+      if (target && el.getAttribute('property') === 'role') refinedRoles.set(target.replace(/^#/, ''), cleanText(el.textContent));
+    }
+
     for (const el of els) {
       const text = el.textContent;
       if (el.namespaceURI === NS.dc) {
         const name = el.localName;
         if (name === 'creator' || name === 'contributor') {
-          const role = ROLE_LABELS[opfAttr(el, 'role')];
+          const role = ROLE_LABELS[opfAttr(el, 'role') || refinedRoles.get(el.getAttribute('id'))];
           add(role || (name === 'creator' ? 'Author' : 'Contributor'), text);
         } else if (name === 'date') {
           const event = opfAttr(el, 'event');
           // In EPUB a date with no event is the publication date.
           add(DATE_LABELS[event || 'publication'] || `Date (${event})`, formatDate(text));
         } else if (name === 'identifier') {
-          const scheme = opfAttr(el, 'scheme');
-          add(scheme ? `Identifier (${scheme})` : 'Identifier', text);
+          let scheme = opfAttr(el, 'scheme');
+          let value = cleanText(text);
+          // EPUB 3 writes the scheme as a prefix instead, e.g. "calibre:684" or "url:https://…".
+          const m = !scheme && value.match(/^([a-z][\w-]*):(?!\/\/)(.+)$/i);
+          if (m && !/^(urn|https?)$/i.test(m[1])) { scheme = m[1]; value = m[2]; }
+          add(scheme ? `Identifier (${scheme})` : 'Identifier', value);
         } else if (name === 'subject') {
           add('Tags', text, 'tags');
         } else if (name === 'description') {
@@ -309,18 +331,26 @@ class EpubBook {
           add(DC_LABELS[name] || name, text);
         }
       } else if (el.localName === 'meta') {
-        const name = el.getAttribute('name');
-        const content = el.getAttribute('content');
-        const prop = el.getAttribute('property');
-        if (name && name.startsWith('calibre:user_metadata:')) {
-          addCalibreColumn(add, name.slice('calibre:user_metadata:'.length), content);
-        } else if (name) {
-          if (name === 'cover' || name === 'calibre:link_maps') continue;
-          if (name === 'calibre:timestamp') add('Added to calibre', formatDate(content));
-          else if (name === 'calibre:rating') add('Rating', stars(content));
-          else add(CALIBRE_LABELS[name] || name, content);
-        } else if (prop) {
-          add(prop === 'dcterms:modified' ? 'Modified' : prop, text);
+        if (el.hasAttribute('refines')) continue;
+        // EPUB 2 uses <meta name content>; EPUB 3 uses <meta property>value</meta>.
+        const key = el.getAttribute('name') || el.getAttribute('property');
+        const value = el.hasAttribute('name') ? el.getAttribute('content') : text;
+        if (!key || HIDDEN_META.has(key)) continue;
+        if (key.startsWith('calibre:user_metadata:')) {
+          addCalibreColumn(add, key.slice('calibre:user_metadata:'.length), value);
+        } else if (key === 'calibre:user_metadata') {
+          // calibre's EPUB 3 form: one JSON object holding every custom column.
+          let cols = null;
+          try { cols = JSON.parse(value); } catch (_) { /* malformed: skip */ }
+          if (cols && typeof cols === 'object') for (const [k, col] of Object.entries(cols)) addCalibreColumn(add, k, col);
+        } else if (key === 'calibre:timestamp') {
+          add('Added to calibre', formatDate(value));
+        } else if (key === 'calibre:rating') {
+          add('Rating', stars(value));
+        } else if (DCTERMS_LABELS[key]) {
+          add(DCTERMS_LABELS[key], /date|issued|modified|created/.test(key) ? formatDate(value) : value);
+        } else {
+          add(CALIBRE_LABELS[key] || key.replace(/^dcterms:/, ''), value);
         }
       }
     }

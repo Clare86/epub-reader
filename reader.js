@@ -495,7 +495,7 @@ function renderBookmarks() {
 // ---------- about this book ----------
 
 const ABOUT_ORDER = ['Summary', 'Series', 'Number in series', 'Author', 'Fandom', 'Relationships', 'Ship Type',
-  'Characters', 'Additional Tags', 'Tags', 'Rating', 'My Rating', 'Status', 'Reading Status', 'Chapters', 'Words',
+  'Characters', 'Additional Tags', 'Tags', 'Rating', 'My Rating', 'Status', 'Reading Status', 'Chapters', 'Words', 'Length',
   'Published', 'Date', 'Updated', 'Modified', 'Language', 'Source', 'Story URL'];
 
 function languageName(code) {
