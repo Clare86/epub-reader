@@ -51,6 +51,16 @@ const idb = {
   keys() { return this.tx('readonly', s => s.getAllKeys()); },
 };
 
+// Browsers may clear a site's storage when disk space runs low (and Safari
+// after weeks without a visit) unless it's marked persistent. Ask once a
+// book has been opened; browsers that decide by themselves answer silently.
+function keepStorage() {
+  if (!navigator.storage || !navigator.storage.persist) return;
+  navigator.storage.persisted()
+    .then(kept => kept || navigator.storage.persist())
+    .catch(() => {});
+}
+
 // ---------- state ----------
 
 const state = {
@@ -61,6 +71,7 @@ const state = {
   pos: null,         // last computed {ch, p}
   tocLinks: [],      // [{a, spineIndex, depth}] in document order
   words: null,       // word count per spine item, once counted
+  search: null,      // {book, items}: paragraph text for searching
 };
 
 const scroller = $('scroller');
@@ -188,6 +199,7 @@ async function openFile(file, name) {
     const recs = await idb.all();
     recs.sort((a, b) => b.opened - a.opened).slice(MAX_RECENT).forEach(r => idb.del(r.key));
   } catch (e) { console.warn('Could not store file in IndexedDB', e); }
+  keepStorage();
 
   document.title = `${book.meta.title} – EPUB Reader`;
   $('book-title').textContent = book.meta.title;
@@ -195,6 +207,9 @@ async function openFile(file, name) {
   $('library').hidden = true;
   $('reader').hidden = false;
   state.words = null;
+  state.search = null;
+  $('search-input').value = '';
+  runSearch();
   buildToc();
   renderBookmarks();
   if (!$('hist-panel').hidden) renderHistory($('hist-list'), $('hist-filter').value);
@@ -730,6 +745,157 @@ async function openAbout() {
   stats.textContent = `${n} section${n > 1 ? 's' : ''} · ${words.toLocaleString()} words (counted here)`;
 }
 
+// ---------- search ----------
+
+// Matching ignores case and accents and treats curly and straight quotes
+// (and dashes) alike. Folding keeps one character per character, so match
+// positions in the folded text are positions in the original text too.
+const MAX_RESULTS = 1000;
+const FOLD_MAP = { '‘': "'", '’': "'", '‚': "'", '′': "'", '“': '"', '”': '"', '„': '"',
+  '–': '-', '—': '-', '‐': '-', '‑': '-', ' ': ' ' };
+function fold(s) {
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const code = s.charCodeAt(i);
+    if (code < 128) { out += code >= 65 && code <= 90 ? String.fromCharCode(code + 32) : s[i]; continue; }
+    let f = FOLD_MAP[s[i]];
+    if (!f) {
+      f = s[i].normalize('NFD')[0].toLowerCase();
+      if (f.length !== 1) f = s[i];
+    }
+    out += f;
+  }
+  return out;
+}
+
+// The text of every paragraph in the book, built on the first search.
+async function searchIndex() {
+  const book = state.book;
+  if (state.search && state.search.book === book) return state.search.items;
+  const parts = await Promise.all(book.spine.map((_, i) => book.chapterHtml(i)));
+  const items = [];
+  const tpl = document.createElement('template');
+  parts.forEach((c, ch) => {
+    tpl.innerHTML = c.html;
+    for (const el of tpl.content.querySelectorAll('[data-p]')) {
+      const text = el.textContent;
+      if (text.trim()) items.push({ ch, p: +el.dataset.p, text, folded: fold(text) });
+    }
+  });
+  tpl.innerHTML = '';
+  if (state.book === book) state.search = { book, items };
+  return items;
+}
+
+function searchPattern(query) {
+  const words = fold(query).trim().split(/\s+/).filter(Boolean);
+  if (!words.length || words.join(' ').length < 2) return null;
+  return new RegExp(words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+'), 'g');
+}
+
+let searchSeq = 0;
+async function runSearch() {
+  const seq = ++searchSeq;
+  const book = state.book;
+  const list = $('search-results'), status = $('search-status');
+  const re = searchPattern($('search-input').value);
+  if (!book || !re) { list.textContent = ''; status.hidden = true; clearSearchHighlight(); return; }
+  if (!state.search || state.search.book !== book) { status.textContent = 'Searching…'; status.hidden = false; }
+  const items = await searchIndex();
+  if (seq !== searchSeq || state.book !== book) return;
+
+  const hits = [];
+  let total = 0;
+  const chapters = new Set();
+  for (const it of items) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(it.folded))) {
+      total++;
+      chapters.add(it.ch);
+      if (hits.length < MAX_RESULTS) hits.push({ ch: it.ch, p: it.p, text: it.text, start: m.index, end: m.index + m[0].length });
+      if (!m[0].length) re.lastIndex++;
+    }
+  }
+
+  const c = chapters.size;
+  status.textContent = !total ? 'No matches.'
+    : `${total.toLocaleString()} match${total > 1 ? 'es' : ''} in ${c} chapter${c > 1 ? 's' : ''}` +
+      (total > hits.length ? `. Showing the first ${hits.length.toLocaleString()}; add words to narrow it down.` : '');
+  status.hidden = false;
+  list.textContent = '';
+  let lastCh = -1;
+  for (const h of hits) {
+    if (h.ch !== lastCh) {
+      lastCh = h.ch;
+      const head = document.createElement('li');
+      head.className = 'sr-ch';
+      head.textContent = book.spine[h.ch].title;
+      list.append(head);
+    }
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.append(snippet(h));
+    btn.addEventListener('click', () => {
+      list.querySelectorAll('button.active').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showSearchHit(h);
+    });
+    li.append(btn);
+    list.append(li);
+  }
+}
+
+// A short piece of the paragraph around the match, cut at word boundaries.
+function snippet({ text, start, end }) {
+  let a = Math.max(0, start - 50), b = Math.min(text.length, end + 80);
+  if (a > 0) { const sp = text.indexOf(' ', a); if (sp > -1 && sp < start) a = sp + 1; }
+  if (b < text.length) { const sp = text.lastIndexOf(' ', b); if (sp > end) b = sp; }
+  const frag = document.createDocumentFragment();
+  const tidy = (s) => s.replace(/\s+/g, ' ');
+  frag.append((a > 0 ? '…' : '') + tidy(text.slice(a, start)));
+  const mark = document.createElement('mark');
+  mark.textContent = tidy(text.slice(start, end));
+  frag.append(mark, tidy(text.slice(end, b)) + (b < text.length ? '…' : ''));
+  return frag;
+}
+
+function clearSearchHighlight() {
+  if (window.CSS && CSS.highlights) CSS.highlights.delete('search');
+}
+
+// Goes to the paragraph, then highlights the matched words and scrolls them
+// into view. Browsers without the CSS highlight API flash the paragraph.
+async function showSearchHit(h) {
+  if (window.matchMedia('(max-width: 760px)').matches) setSidebar(false);
+  const hasHighlights = window.CSS && CSS.highlights && window.Highlight;
+  await goTo({ ch: h.ch, p: h.p }, { flash: !hasHighlights });
+  if (!hasHighlights) return;
+  const section = content.querySelector(`.chapter[data-ch="${h.ch}"]`);
+  const el = section && section.querySelector(`[data-p="${h.p}"]`);
+  if (!el) return;
+  const range = document.createRange();
+  let offset = 0, startSet = false;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let node; (node = walker.nextNode());) {
+    const len = node.data.length;
+    if (!startSet && h.start < offset + len) { range.setStart(node, h.start - offset); startSet = true; }
+    if (startSet && h.end <= offset + len) { range.setEnd(node, h.end - offset); break; }
+    offset += len;
+  }
+  if (!startSet) return;
+  CSS.highlights.set('search', new Highlight(range));
+  const r = range.getBoundingClientRect(), sr = scroller.getBoundingClientRect();
+  if (r.top < sr.top || r.bottom > sr.bottom - 40) scroller.scrollTop += r.top - sr.top - sr.height / 3;
+}
+
+function openSearch() {
+  setSidebar(true);
+  setTab('search');
+  $('search-input').focus();
+  $('search-input').select();
+}
+
 // ---------- chrome ----------
 
 function setSidebar(open) {
@@ -742,9 +908,11 @@ function setTab(which) {
   $('tab-toc').classList.toggle('active', which === 'toc');
   $('tab-bm').classList.toggle('active', which === 'bm');
   $('tab-hist').classList.toggle('active', which === 'hist');
+  $('tab-search').classList.toggle('active', which === 'search');
   $('toc').hidden = which !== 'toc';
   $('bm-panel').hidden = which !== 'bm';
   $('hist-panel').hidden = which !== 'hist';
+  $('search-panel').hidden = which !== 'search';
   if (which === 'hist') renderHistory($('hist-list'), $('hist-filter').value);
   if (which === 'toc' && state.pos) highlightToc(state.pos.ch);
 }
@@ -818,6 +986,10 @@ $('bm-form').addEventListener('submit', (e) => {
 $('tab-toc').addEventListener('click', () => setTab('toc'));
 $('tab-bm').addEventListener('click', () => setTab('bm'));
 $('tab-hist').addEventListener('click', () => setTab('hist'));
+$('tab-search').addEventListener('click', openSearch);
+let searchTimer = null;
+$('search-input').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 250); });
+$('search-form').addEventListener('submit', (e) => { e.preventDefault(); clearTimeout(searchTimer); runSearch(); });
 $('hist-filter').addEventListener('input', () => renderHistory($('hist-list'), $('hist-filter').value));
 $('recent-filter').addEventListener('input', refreshRecent);
 document.querySelectorAll('.btn-export').forEach(b => b.addEventListener('click', exportData));
@@ -863,6 +1035,7 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 't') setSidebar(!settings.sidebar);
   else if (e.key === 'o') $('file-input').click();
   else if (e.key === 'i' && !$('about').open) openAbout();
+  else if (e.key === '/') openSearch();
   else return;
   e.preventDefault();
 });

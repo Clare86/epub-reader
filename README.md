@@ -32,6 +32,7 @@ The app isn't signed, so macOS may block it the first time it's opened after dow
 - **Chapter or whole story**: read one chapter at a time, or the whole story as one continuous scroll. Switching between them keeps your place.
 - **Automatic resume**: your position is saved as you read, down to the paragraph. Reopening the book, or reloading the page, takes you straight back.
 - **Progress by words**: the percentage read is the words before your position out of the book's total, so long and short chapters count fairly and both views agree.
+- **Search**: find any words in the book from the sidebar's search tab. Results are grouped by chapter with a snippet of each. Clicking one takes you there and highlights the words. Case, accents and curly versus straight quotes don't matter.
 - **Named bookmarks**: mark places you want to return to. You can name, rename and delete them, and jump to any of them.
 - **History**: every book you've opened, with when you last opened it, how far you've read and how many bookmarks it has. The most recent 40 books are kept in the browser and reopen with one click. For older ones you pick the file again, and your place is still remembered.
 - **About this book**: all of the book's metadata, including the cover, summary, series, tags and dates. If the book has Calibre's custom columns (for example Fandom, Relationships, Status and Words from AO3 downloads), those show too. It also gives a word count worked out from the text.
@@ -47,6 +48,7 @@ The app isn't signed, so macOS may block it the first time it's opened after dow
 | `B` | Bookmark the current spot |
 | `T` | Show or hide the sidebar |
 | `I` | About this book |
+| `/` | Search this book |
 | `O` | Open another book |
 
 ## Privacy and where data is kept
@@ -60,11 +62,13 @@ Everything is stored in your browser, for this page only:
 
 Each book is recognised by its source URL when it has one (such as an AO3 work link), otherwise by its EPUB identifier, otherwise by title and author. So if you download an updated version of a story, your place and bookmarks carry over. Saved data belongs to one browser: Chrome and Safari, for example, don't share it. Clearing your browser's site data for the page erases it.
 
+When you open a book, the reader asks the browser to keep its storage rather than clear it automatically when space runs low. Chrome and Safari decide this by themselves, and Firefox asks you once.
+
 To keep a copy, use **Export…** under the drop area on the start screen (or **Export data…** at the top of the History tab). It saves a small `.json` file. **Import…** restores it: the newer reading position wins for each book, and bookmarks from both are kept. The backup doesn't include the books themselves, so after a restore each book shows "pick file to reopen" until you open its file once.
 
 ## Browser support
 
-The reader needs a reasonably recent browser: Chrome or Edge 105+, Safari 16.4+, or Firefox 121+. It relies on the built-in `DecompressionStream` to unzip books and the CSS `:has()` selector.
+The reader needs a reasonably recent browser: Chrome or Edge 105+, Safari 16.4+, or Firefox 121+. It relies on the built-in `DecompressionStream` to unzip books and the CSS `:has()` selector. Search highlights the exact words where the browser supports CSS highlights (Chrome 105+, Safari 17.2+, Firefox 140+); otherwise it highlights the paragraph.
 
 ## Limitations
 
