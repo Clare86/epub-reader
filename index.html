@@ -42,17 +42,24 @@
       <div id="book-title" class="book-title"></div>
       <div class="book-author muted"><span id="book-author"></span> <span id="status"></span></div>
     </div>
-    <div class="seg" role="group" aria-label="View mode">
-      <button id="mode-chapter" class="seg-btn" title="One chapter at a time">Chapter</button>
-      <button id="mode-whole" class="seg-btn" title="Whole story as one scroll">Whole story</button>
+    <!-- On narrow screens these collapse into the ⋯ menu. -->
+    <div id="controls" class="controls">
+      <div class="seg" role="group" aria-label="View mode">
+        <button id="mode-chapter" class="seg-btn" title="One chapter at a time">Chapter</button>
+        <button id="mode-whole" class="seg-btn" title="Whole story as one scroll">Whole story</button>
+      </div>
+      <button id="btn-bookmark" class="icon-btn" title="Add bookmark here (B)" aria-label="Add bookmark"><span class="ico">&#9733;</span><span class="menu-label">Bookmark this spot</span></button>
+      <div class="size-group">
+        <span class="menu-label">Text size</span>
+        <button id="btn-font-down" class="icon-btn" title="Smaller text" aria-label="Smaller text">A&minus;</button>
+        <button id="btn-font-up" class="icon-btn" title="Larger text" aria-label="Larger text">A+</button>
+      </div>
+      <button id="btn-theme" class="icon-btn" title="Light / sepia / dark" aria-label="Change theme"><span class="ico">&#9680;</span><span class="menu-label">Theme: <span id="theme-name"></span></span></button>
+      <button id="btn-about" class="icon-btn" title="About this book (I)" aria-label="About this book"><span class="ico">&#9432;</span><span class="menu-label">About this book</span></button>
+      <button id="btn-open" class="icon-btn" title="Open another EPUB (O)" aria-label="Open another EPUB"><span class="ico desk-only">Open</span><span class="ico menu-only">&#8599;</span><span class="menu-label">Open another book</span></button>
+      <button id="btn-close" class="icon-btn" title="Close book" aria-label="Close book"><span class="ico">&times;</span><span class="menu-label">Close book</span></button>
     </div>
-    <button id="btn-bookmark" class="icon-btn" title="Add bookmark here (B)" aria-label="Add bookmark">&#9733;</button>
-    <button id="btn-font-down" class="icon-btn" title="Smaller text" aria-label="Smaller text">A&minus;</button>
-    <button id="btn-font-up" class="icon-btn" title="Larger text" aria-label="Larger text">A+</button>
-    <button id="btn-theme" class="icon-btn" title="Light / sepia / dark" aria-label="Change theme">&#9680;</button>
-    <button id="btn-about" class="icon-btn" title="About this book (I)" aria-label="About this book">&#9432;</button>
-    <button id="btn-open"class="icon-btn" title="Open another EPUB (O)" aria-label="Open another EPUB">Open</button>
-    <button id="btn-close"class="icon-btn" title="Close book" aria-label="Close book">&times;</button>
+    <button id="btn-menu" class="icon-btn menu-btn" title="Menu" aria-label="Menu" aria-expanded="false" aria-controls="controls">&#8943;</button>
     <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
   </header>
 
@@ -91,9 +98,9 @@
     <main id="scroller" class="scroller" tabindex="-1">
       <article id="content" class="content"></article>
       <nav id="chapter-nav" class="chapter-nav" hidden>
-        <button id="btn-prev">&larr; Previous chapter</button>
+        <button id="btn-prev">&larr; Previous<span class="nav-word"> chapter</span></button>
         <span id="chapter-label" class="muted small"></span>
-        <button id="btn-next">Next chapter &rarr;</button>
+        <button id="btn-next">Next<span class="nav-word"> chapter</span> &rarr;</button>
       </nav>
     </main>
   </div>

@@ -97,6 +97,9 @@ input[type="search"] {
 .seg-btn { border: 0; border-radius: 0; padding: 4px 10px; }
 .seg-btn + .seg-btn { border-left: 1px solid var(--line); }
 .seg-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.controls { display: flex; align-items: center; gap: 6px; }
+.size-group { display: contents; }
+.menu-label, .menu-only, .menu-btn { display: none; }
 .progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
 .progress-bar { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
 
@@ -237,8 +240,29 @@ input[type="search"] {
   .about-fields { grid-template-columns: 1fr; gap: 2px; }
   .about-fields dd { margin-bottom: 10px; }
   .about-cover { width: 80px; }
-  .sidebar { position: fixed; top: 47px; bottom: 0; left: 0; z-index: 20; width: min(300px, 85vw); box-shadow: 4px 0 18px rgba(0,0,0,.2); }
-  #book-author, #btn-font-down, #btn-font-up { display: none; }
+  .sidebar { position: fixed; top: 47px; bottom: 0; left: 0; right: 0; z-index: 20; width: auto; border-right: 0; }
+  #book-author { display: none; }
+  .nav-word { display: none; }
+  .chapter-nav button { white-space: nowrap; }
+  #chapter-label { text-align: center; }
+
+  /* Topbar controls become a dropdown menu */
+  .menu-btn { display: block; font-size: 20px; line-height: 1; }
+  .controls {
+    display: none; position: absolute; top: calc(100% + 4px); right: 8px; z-index: 30;
+    flex-direction: column; align-items: stretch; gap: 2px; min-width: 230px; padding: 8px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.18);
+  }
+  .reader.menu-open .controls { display: flex; }
+  .controls .seg { margin-bottom: 6px; }
+  .controls .seg-btn { flex: 1; padding: 7px 8px; font-size: 14px; }
+  .controls > .icon-btn, .size-group {
+    display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 6px; border-radius: 6px;
+  }
+  .controls .ico { width: 22px; text-align: center; flex-shrink: 0; }
+  .controls .menu-label, .controls .menu-only { display: inline; }
+  .controls .desk-only { display: none; }
+  .size-group .menu-label { flex: 1; padding-left: 32px; }
+  .size-group .icon-btn { border-color: var(--line); min-width: 44px; padding: 4px 8px; }
   .content { padding: 20px 16px 32px; }
-  .seg-btn { padding: 4px 7px; font-size: 13px; }
 }

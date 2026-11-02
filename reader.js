@@ -985,6 +985,7 @@ function setTab(which) {
 
 function applyAppearance() {
   document.documentElement.dataset.theme = settings.theme;
+  $('theme-name').textContent = settings.theme[0].toUpperCase() + settings.theme.slice(1);
   document.documentElement.style.setProperty('--font-size', settings.fontSize + 'px');
 }
 
@@ -1028,7 +1029,27 @@ window.addEventListener('drop', (e) => {
   if (f) openFile(f);
 });
 
-$('btn-sidebar').addEventListener('click', () => setSidebar(!settings.sidebar));
+$('btn-sidebar').addEventListener('click', () => { setMenu(false); setSidebar(!settings.sidebar); });
+
+// On narrow screens the topbar controls live in a ⋯ menu. Text size and
+// theme leave it open so they can be pressed repeatedly; everything else
+// closes it.
+function setMenu(open) {
+  $('reader').classList.toggle('menu-open', open);
+  $('btn-menu').setAttribute('aria-expanded', open);
+}
+$('btn-menu').addEventListener('click', (e) => {
+  e.stopPropagation();
+  setMenu(!$('reader').classList.contains('menu-open'));
+});
+$('controls').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (b && !['btn-font-down', 'btn-font-up', 'btn-theme'].includes(b.id)) setMenu(false);
+});
+document.addEventListener('click', (e) => {
+  if ($('reader').classList.contains('menu-open') && !e.target.closest('#controls, #btn-menu')) setMenu(false);
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
 $('mode-chapter').addEventListener('click', () => switchMode('chapter'));
 $('mode-whole').addEventListener('click', () => switchMode('whole'));
 $('btn-prev').addEventListener('click', () => stepChapter(-1));
@@ -1041,6 +1062,8 @@ $('about-close').addEventListener('click', () => $('about').close());
 $('about').addEventListener('click', (e) => { if (e.target === $('about')) $('about').close(); });
 $('btn-bookmark').addEventListener('click', () => {
   addBookmark('');
+  // On a phone the sidebar would cover the page; the toast is enough.
+  if (window.matchMedia('(max-width: 760px)').matches) return;
   setSidebar(true);
   setTab('bm');
 });
