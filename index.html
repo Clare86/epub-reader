@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EPUB Reader</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css">
+<!-- ?v= makes browsers fetch fresh copies after an update; change it whenever these files change. -->
+<link rel="stylesheet" href="style.css?v=2026-11-02b">
 </head>
 <body>
 
@@ -126,8 +127,8 @@
 <input id="import-input" type="file" accept=".json,application/json" hidden>
 <div id="drop-overlay"class="drop-overlay" hidden>Drop EPUB to open</div>
 
-<script src="zip.js"></script>
-<script src="epub.js"></script>
-<script src="reader.js"></script>
+<script src="zip.js?v=2026-11-02b"></script>
+<script src="epub.js?v=2026-11-02b"></script>
+<script src="reader.js?v=2026-11-02b"></script>
 </body>
 </html>
