@@ -59,7 +59,7 @@ Everything is stored in your browser, for this page only:
 
 Each book is recognised by its source URL when it has one (such as an AO3 work link), otherwise by its EPUB identifier, otherwise by title and author. So if you download an updated version of a story, your place and bookmarks carry over. Saved data belongs to one browser: Chrome and Safari, for example, don't share it. Clearing your browser's site data for the page erases it.
 
-To keep a copy, use **Export…** at the bottom of the start screen (or **Export data…** in the History tab). It saves a small `.json` file. **Import…** restores it: the newer reading position wins for each book, and bookmarks from both are kept. The backup doesn't include the books themselves, so after a restore each book shows "pick file to reopen" until you open its file once.
+To keep a copy, use **Export…** under the drop area on the start screen (or **Export data…** at the top of the History tab). It saves a small `.json` file. **Import…** restores it: the newer reading position wins for each book, and bookmarks from both are kept. The backup doesn't include the books themselves, so after a restore each book shows "pick file to reopen" until you open its file once.
 
 ## Browser support
 
