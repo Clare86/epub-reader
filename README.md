@@ -78,3 +78,7 @@ The reader needs a reasonably recent browser: Chrome or Edge 105+, Safari 16.4+,
 | `reader.js` | The interface, position saving, bookmarks and history |
 | `favicon.svg` | Browser tab icon |
 | `EPUB Reader.app` | Optional macOS launcher for the Dock |
+
+## License
+
+[MIT](LICENSE)
