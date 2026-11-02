@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EPUB Reader</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Library / open screen -->
+<section id="library" class="library">
+  <div class="library-inner">
+    <h1>EPUB Reader</h1>
+    <p class="muted">Open a <code>.epub</code> from your files. Everything stays on this computer: files are read in the browser and never uploaded.</p>
+    <label id="dropzone" class="dropzone" tabindex="0">
+      <input id="file-input" type="file" accept=".epub,application/epub+zip" hidden>
+      <strong>Drop an EPUB here</strong>
+      <span class="muted">or click to choose a file</span>
+    </label>
+    <p id="open-error" class="error" hidden></p>
+    <div id="recent-wrap" hidden>
+      <h2>History</h2>
+      <input id="recent-filter" class="filter" type="search" placeholder="Filter by title or author" autocomplete="off">
+      <ul id="recent" class="recent"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- Reader -->
+<section id="reader" class="reader" hidden>
+  <header class="topbar">
+    <button id="btn-sidebar" class="icon-btn" title="Toggle sidebar (T)" aria-label="Toggle sidebar">&#9776;</button>
+    <div class="book-heading">
+      <div id="book-title" class="book-title"></div>
+      <div class="book-author muted"><span id="book-author"></span> <span id="status"></span></div>
+    </div>
+    <div class="seg" role="group" aria-label="View mode">
+      <button id="mode-chapter" class="seg-btn" title="One chapter at a time">Chapter</button>
+      <button id="mode-whole" class="seg-btn" title="Whole story as one scroll">Whole story</button>
+    </div>
+    <button id="btn-bookmark" class="icon-btn" title="Add bookmark here (B)" aria-label="Add bookmark">&#9733;</button>
+    <button id="btn-font-down" class="icon-btn" title="Smaller text" aria-label="Smaller text">A&minus;</button>
+    <button id="btn-font-up" class="icon-btn" title="Larger text" aria-label="Larger text">A+</button>
+    <button id="btn-theme" class="icon-btn" title="Light / sepia / dark" aria-label="Change theme">&#9680;</button>
+    <button id="btn-about" class="icon-btn" title="About this book (I)" aria-label="About this book">&#9432;</button>
+    <button id="btn-open"class="icon-btn" title="Open another EPUB (O)" aria-label="Open another EPUB">Open</button>
+    <button id="btn-close"class="icon-btn" title="Close book" aria-label="Close book">&times;</button>
+    <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+  </header>
+
+  <div class="body">
+    <aside id="sidebar" class="sidebar">
+      <div class="tabs" role="tablist">
+        <button id="tab-toc" class="tab active" role="tab">Contents</button>
+        <button id="tab-bm" class="tab" role="tab">Bookmarks <span id="bm-count" class="count"></span></button>
+        <button id="tab-hist" class="tab" role="tab">History</button>
+      </div>
+      <nav id="toc" class="toc panel"></nav>
+      <div id="bm-panel" class="panel" hidden>
+        <form id="bm-form" class="bm-form">
+          <input id="bm-name" type="text" placeholder="Bookmark name (optional)" autocomplete="off">
+          <button type="submit">Add here</button>
+        </form>
+        <ul id="bm-list" class="bm-list"></ul>
+        <p id="bm-empty" class="muted small">No bookmarks yet. Your reading position is saved automatically; named bookmarks are for places you want to come back to.</p>
+      </div>
+      <div id="hist-panel" class="panel" hidden>
+        <div class="bm-form"><input id="hist-filter" class="filter" type="search" placeholder="Filter by title or author" autocomplete="off"></div>
+        <ul id="hist-list" class="recent hist-list"></ul>
+      </div>
+    </aside>
+
+    <main id="scroller" class="scroller" tabindex="-1">
+      <article id="content" class="content"></article>
+      <nav id="chapter-nav" class="chapter-nav" hidden>
+        <button id="btn-prev">&larr; Previous chapter</button>
+        <span id="chapter-label" class="muted small"></span>
+        <button id="btn-next">Next chapter &rarr;</button>
+      </nav>
+    </main>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+</section>
+
+<dialog id="about" class="about" aria-labelledby="about-heading">
+  <header class="about-head">
+    <h2 id="about-heading">About this book</h2>
+    <button id="about-close" class="icon-btn" aria-label="Close">&times;</button>
+  </header>
+  <div class="about-top">
+    <img id="about-cover" class="about-cover" alt="Cover" hidden>
+    <div>
+      <div id="about-title" class="about-title"></div>
+      <div id="about-author" class="muted"></div>
+      <div id="about-stats" class="about-stats muted small"></div>
+    </div>
+  </div>
+  <dl id="about-fields" class="about-fields"></dl>
+</dialog>
+
+<div id="drop-overlay"class="drop-overlay" hidden>Drop EPUB to open</div>
+
+<script src="zip.js"></script>
+<script src="epub.js"></script>
+<script src="reader.js"></script>
+</body>
+</html>
