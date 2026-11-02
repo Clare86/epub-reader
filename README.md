@@ -31,6 +31,7 @@ The app isn't signed, so macOS may block it the first time it's opened after dow
 - **Contents sidebar**: built from the book's own table of contents. The current chapter is highlighted, and each entry shows its word count. A part's count includes its chapters. In chapter view, the word count also appears at the foot of the chapter.
 - **Chapter or whole story**: read one chapter at a time, or the whole story as one continuous scroll. Switching between them keeps your place.
 - **Automatic resume**: your position is saved as you read, down to the paragraph. Reopening the book, or reloading the page, takes you straight back.
+- **Progress by words**: the percentage read is the words before your position out of the book's total, so long and short chapters count fairly and both views agree.
 - **Named bookmarks**: mark places you want to return to. You can name, rename and delete them, and jump to any of them.
 - **History**: every book you've opened, with when you last opened it, how far you've read and how many bookmarks it has. The most recent 40 books are kept in the browser and reopen with one click. For older ones you pick the file again, and your place is still remembered.
 - **About this book**: all of the book's metadata, including the cover, summary, series, tags and dates. If the book has Calibre's custom columns (for example Fandom, Relationships, Status and Words from AO3 downloads), those show too. It also gives a word count worked out from the text.

@@ -374,6 +374,7 @@ async function countChapterWords() {
     l.a.append(span);
   });
   if (state.rendered === 'chapter') updateChapterNav();
+  onScroll(); // recalculate progress by words
 }
 
 function highlightToc(ch) {
@@ -486,14 +487,30 @@ function currentPosition() {
   return null;
 }
 
+// Words read out of the book's total. The point read up to is a line that
+// moves from the top of the view to the bottom as you scroll from the start
+// of the page to the end, so the last chapter reaches 100%. Until words are
+// counted, chapters count equally.
 function progressFraction(pos) {
-  if (state.rendered === 'whole') {
-    const max = scroller.scrollHeight - scroller.clientHeight;
-    return max > 0 ? scroller.scrollTop / max : 1;
-  }
   const max = scroller.scrollHeight - scroller.clientHeight;
-  const within = max > 0 ? scroller.scrollTop / max : 1;
-  return (pos.ch + within) / state.book.spine.length;
+  const f = max > 0 ? scroller.scrollTop / max : 1;
+  let ch = pos.ch, within = f;
+  if (state.rendered === 'whole') {
+    if (!state.words) return f;
+    const line = scroller.getBoundingClientRect().top + scroller.clientHeight * f;
+    for (const sec of content.querySelectorAll('.chapter')) {
+      const r = sec.getBoundingClientRect();
+      if (r.bottom < line) continue;
+      ch = +sec.dataset.ch;
+      within = r.height ? Math.min(1, Math.max(0, (line - r.top) / r.height)) : 1;
+      break;
+    }
+  }
+  const w = state.words;
+  const total = w ? w.reduce((a, b) => a + b, 0) : 0;
+  if (!total) return (ch + within) / state.book.spine.length;
+  const before = w.slice(0, ch).reduce((a, b) => a + b, 0);
+  return (before + within * w[ch]) / total;
 }
 
 let scrollQueued = false, saveTimer = null;
