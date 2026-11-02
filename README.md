@@ -4,7 +4,11 @@ A small, private EPUB reader that runs entirely in your web browser. Books are u
 
 It was made for long, multi-chapter stories, including fanfiction downloaded from AO3 with tools such as Calibre or FanFicFare. It works with any standard (DRM-free) EPUB 2 or EPUB 3 file.
 
+**Use it online: https://clare86.github.io/epub-reader/** (books are still opened on your own computer, never uploaded)
+
 ## Getting started
+
+To use it without going online, or to keep a copy of your own:
 
 1. Download this repository (**Code → Download ZIP**, then unzip it) or clone it.
 2. Open `index.html` in your browser by double-clicking it, or by dragging it onto a browser window.
@@ -60,7 +64,7 @@ Everything is stored in your browser, for this page only:
 - **localStorage** keeps settings, plus each book's reading position, bookmarks and last-opened time.
 - **IndexedDB** keeps copies of the 40 most recently opened files, so they can be reopened without picking them again.
 
-Each book is recognised by its source URL when it has one (such as an AO3 work link), otherwise by its EPUB identifier, otherwise by title and author. So if you download an updated version of a story, your place and bookmarks carry over. Saved data belongs to one browser: Chrome and Safari, for example, don't share it. Clearing your browser's site data for the page erases it.
+Each book is recognised by its source URL when it has one (such as an AO3 work link), otherwise by its EPUB identifier, otherwise by title and author. So if you download an updated version of a story, your place and bookmarks carry over. Saved data belongs to one browser: Chrome and Safari, for example, don't share it. The online version and a downloaded copy also keep separate data; use Export and Import to move it between them. Clearing your browser's site data for the page erases it.
 
 When you open a book, the reader asks the browser to keep its storage rather than clear it automatically when space runs low. Chrome and Safari decide this by themselves, and Firefox asks you once.
 
