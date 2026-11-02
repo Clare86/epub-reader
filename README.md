@@ -28,7 +28,7 @@ The app isn't signed, so macOS may block it the first time it's opened after dow
 
 ## Features
 
-- **Contents sidebar**: built from the book's own table of contents. The current chapter is highlighted.
+- **Contents sidebar**: built from the book's own table of contents. The current chapter is highlighted, and each entry shows its word count. A part's count includes its chapters. In chapter view, the word count also appears at the foot of the chapter.
 - **Chapter or whole story**: read one chapter at a time, or the whole story as one continuous scroll. Switching between them keeps your place.
 - **Automatic resume**: your position is saved as you read, down to the paragraph. Reopening the book, or reloading the page, takes you straight back.
 - **Named bookmarks**: mark places you want to return to. You can name, rename and delete them, and jump to any of them.

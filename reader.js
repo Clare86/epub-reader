@@ -59,7 +59,8 @@ const state = {
   chapter: 0,        // chapter shown in chapter mode
   rendered: null,    // 'chapter' | 'whole'
   pos: null,         // last computed {ch, p}
-  tocLinks: [],      // [{a, spineIndex}] in document order
+  tocLinks: [],      // [{a, spineIndex, depth}] in document order
+  words: null,       // word count per spine item, once counted
 };
 
 const scroller = $('scroller');
@@ -193,6 +194,7 @@ async function openFile(file, name) {
   $('book-author').textContent = author;
   $('library').hidden = true;
   $('reader').hidden = false;
+  state.words = null;
   buildToc();
   renderBookmarks();
   if (!$('hist-panel').hidden) renderHistory($('hist-list'), $('hist-filter').value);
@@ -200,6 +202,7 @@ async function openFile(file, name) {
   const pos = state.data.pos;
   await show(settings.mode, pos ? { ch: pos.ch, p: pos.p } : { ch: 0, p: 0 });
   if (pos && (pos.ch || pos.p)) toast(`Resumed at ${book.spine[pos.ch] ? book.spine[pos.ch].title : 'saved position'}`);
+  countChapterWords();
 }
 
 function closeBook({ keepLast = false } = {}) {
@@ -313,12 +316,15 @@ function buildToc() {
   const nav = $('toc');
   nav.textContent = '';
   state.tocLinks = [];
-  const build = (items) => {
+  const build = (items, depth) => {
     const ol = document.createElement('ol');
     for (const t of items) {
       const li = document.createElement('li');
       const a = document.createElement('a');
-      a.textContent = t.label;
+      const label = document.createElement('span');
+      label.className = 'toc-label';
+      label.textContent = t.label;
+      a.append(label);
       a.href = '#';
       if (t.spineIndex < 0) a.classList.add('dead');
       a.addEventListener('click', (e) => {
@@ -328,13 +334,46 @@ function buildToc() {
         if (window.matchMedia('(max-width: 760px)').matches) setSidebar(false);
       });
       li.append(a);
-      state.tocLinks.push({ a, spineIndex: t.spineIndex });
-      if (t.children.length) li.append(build(t.children));
+      state.tocLinks.push({ a, spineIndex: t.spineIndex, depth });
+      if (t.children.length) li.append(build(t.children, depth + 1));
       ol.append(li);
     }
     return ol;
   };
-  nav.append(build(state.book.toc));
+  nav.append(build(state.book.toc, 0));
+}
+
+// Counts the words in every spine item, then labels each contents entry
+// with the words from its file up to the next entry at the same or a
+// higher level (so a part's count includes its chapters). Entries that
+// share a file with a sibling (anchors within one file) get no count,
+// since the file can't be split between them.
+async function countChapterWords() {
+  const book = state.book;
+  const parts = await Promise.all(book.spine.map((_, i) => book.chapterHtml(i)));
+  if (state.book !== book) return;
+  state.words = parts.map(c => c.words);
+  const links = state.tocLinks;
+  links.forEach((l, i) => {
+    const s = l.spineIndex;
+    if (s < 0) return;
+    let end = book.spine.length;
+    for (let j = i + 1; j < links.length; j++) {
+      const o = links[j];
+      if (o.depth > l.depth || o.spineIndex < 0) continue;
+      if (o.spineIndex === s) { if (o.depth === l.depth) return; continue; }
+      if (o.spineIndex > s) { end = o.spineIndex; break; }
+    }
+    if (links.some((o, j) => j < i && o.depth === l.depth && o.spineIndex === s)) return;
+    const words = state.words.slice(s, end).reduce((a, b) => a + b, 0);
+    if (!words) return;
+    const span = document.createElement('span');
+    span.className = 'toc-words';
+    span.textContent = words.toLocaleString();
+    span.title = `${words.toLocaleString()} words`;
+    l.a.append(span);
+  });
+  if (state.rendered === 'chapter') updateChapterNav();
 }
 
 function highlightToc(ch) {
@@ -415,7 +454,8 @@ function updateChapterNav() {
   const n = state.book.spine.length;
   $('btn-prev').disabled = state.chapter <= 0;
   $('btn-next').disabled = state.chapter >= n - 1;
-  $('chapter-label').textContent = `${state.chapter + 1} / ${n}`;
+  const words = state.words && state.words[state.chapter];
+  $('chapter-label').textContent = `${state.chapter + 1} / ${n}` + (words ? ` · ${words.toLocaleString()} words` : '');
 }
 
 // ---------- position tracking ----------
