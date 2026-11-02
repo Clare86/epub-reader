@@ -224,6 +224,89 @@ function persistBook() {
   if (state.book) lsSet(LS_BOOK + state.book.key, state.data);
 }
 
+// ---------- backup ----------
+
+// Reading data (settings, positions, bookmarks, history) can be saved to a
+// JSON file and restored, e.g. after clearing site data. The stored EPUB
+// files themselves aren't included; after a restore they're picked again.
+const BACKUP_APP = 'epub-reader';
+
+function exportData() {
+  savePosition();
+  const books = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(LS_BOOK)) { const d = lsGet(k, null); if (d) books[k.slice(LS_BOOK.length)] = d; }
+  }
+  const { lastKey, ...prefs } = settings;
+  const json = JSON.stringify({ app: BACKUP_APP, version: 1, exported: new Date().toISOString(), settings: prefs, books }, null, 1);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  a.download = `epub-reader-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  const n = Object.keys(books).length;
+  backupMessage(`Exported ${n} book${n === 1 ? '' : 's'}.`);
+}
+
+// Combine a book's saved data with the same book's data from a backup:
+// the newer position wins, and bookmarks from both are kept.
+function mergeBook(local, incoming) {
+  if (!local) return incoming;
+  const newer = (incoming.opened || 0) > (local.opened || 0) ? incoming : local;
+  const out = Object.assign({}, newer === local ? incoming : local, newer);
+  const at = (d) => (d.pos && d.pos.at) || 0;
+  out.pos = at(incoming) > at(local) ? incoming.pos : local.pos;
+  const marks = new Map();
+  for (const b of [...(incoming.bookmarks || []), ...(local.bookmarks || [])]) if (b && b.id && !marks.has(b.id)) marks.set(b.id, b);
+  for (const b of newer.bookmarks || []) if (b && b.id) marks.set(b.id, b); // keep the newer rename
+  out.bookmarks = [...marks.values()].sort((a, b) => a.ch - b.ch || a.p - b.p);
+  return out;
+}
+
+async function importData(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); } catch (_) { data = null; }
+  if (!data || data.app !== BACKUP_APP || !data.books || typeof data.books !== 'object') {
+    backupMessage(`${file.name} isn't an EPUB Reader backup.`, true);
+    return;
+  }
+  let books = 0, marks = 0;
+  for (const [key, incoming] of Object.entries(data.books)) {
+    if (!incoming || typeof incoming !== 'object') continue;
+    const current = state.book && state.book.key === key;
+    const merged = mergeBook(current ? state.data : lsGet(LS_BOOK + key, null), incoming);
+    lsSet(LS_BOOK + key, merged);
+    if (current) { state.data = merged; renderBookmarks(); }
+    books++;
+    marks += (incoming.bookmarks || []).length;
+  }
+  if (data.settings && typeof data.settings === 'object') {
+    const { lastKey, ...prefs } = data.settings;
+    Object.assign(settings, prefs);
+    saveSettings();
+    applyAppearance();
+    setSidebar(settings.sidebar);
+  }
+  refreshRecent();
+  if (!$('hist-panel').hidden) renderHistory($('hist-list'), $('hist-filter').value);
+  let stored = new Set();
+  try { stored = new Set(await idb.keys()); } catch (_) {}
+  const missing = Object.keys(data.books).some(k => !stored.has(k));
+  backupMessage(`Restored ${books} book${books === 1 ? '' : 's'} and ${marks} bookmark${marks === 1 ? '' : 's'}.` +
+    (missing ? ' Books marked “pick file to reopen” need their file choosing once.' : ''));
+}
+
+function backupMessage(msg, isError = false) {
+  if (state.book) { toast(msg); return; }
+  const el = $('backup-msg');
+  el.textContent = msg;
+  el.className = isError ? 'error' : '';
+  el.hidden = false;
+}
+
 // ---------- TOC ----------
 
 function buildToc() {
@@ -680,6 +763,13 @@ $('tab-bm').addEventListener('click', () => setTab('bm'));
 $('tab-hist').addEventListener('click', () => setTab('hist'));
 $('hist-filter').addEventListener('input', () => renderHistory($('hist-list'), $('hist-filter').value));
 $('recent-filter').addEventListener('input', refreshRecent);
+document.querySelectorAll('.btn-export').forEach(b => b.addEventListener('click', exportData));
+document.querySelectorAll('.btn-import').forEach(b => b.addEventListener('click', () => $('import-input').click()));
+$('import-input').addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (f) importData(f);
+  e.target.value = '';
+});
 $('btn-font-up').addEventListener('click', () => { settings.fontSize = Math.min(32, settings.fontSize + 1); keepPlace(); });
 $('btn-font-down').addEventListener('click', () => { settings.fontSize = Math.max(12, settings.fontSize - 1); keepPlace(); });
 $('btn-theme').addEventListener('click', () => {

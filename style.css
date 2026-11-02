@@ -70,6 +70,10 @@ input[type="search"] {
 .hist-list .r-sub { font-size: 12px; white-space: normal; }
 .hist-list button { padding: 1px 6px; font-size: 12px; border-color: transparent; color: var(--muted); }
 .hist-list button:hover { color: var(--fg); border-color: var(--line); }
+.backup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 32px; }
+.backup button { font-size: 13px; padding: 2px 8px; }
+.backup p { flex-basis: 100%; margin: 4px 0 0; }
+.hist-list + .backup { margin: 0; padding: 12px 16px; }
 .recent li.current .r-title { color: var(--accent); }
 .recent li.current .r-title::after { content: " · reading"; font-weight: normal; font-size: 12px; color: var(--muted); }
 .drop-overlay {

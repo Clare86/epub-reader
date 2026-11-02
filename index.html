@@ -25,6 +25,12 @@
       <input id="recent-filter" class="filter" type="search" placeholder="Filter by title or author" autocomplete="off">
       <ul id="recent" class="recent"></ul>
     </div>
+    <div class="backup small muted">
+      <span>Back up your places, bookmarks and history:</span>
+      <button class="btn-export" title="Save reading data to a file">Export…</button>
+      <button class="btn-import" title="Restore reading data from an exported file">Import…</button>
+      <p id="backup-msg" hidden></p>
+    </div>
   </div>
 </section>
 
@@ -69,6 +75,10 @@
       <div id="hist-panel" class="panel" hidden>
         <div class="bm-form"><input id="hist-filter" class="filter" type="search" placeholder="Filter by title or author" autocomplete="off"></div>
         <ul id="hist-list" class="recent hist-list"></ul>
+        <div class="backup small muted">
+          <button class="btn-export" title="Save reading data to a file">Export data…</button>
+          <button class="btn-import" title="Restore reading data from an exported file">Import data…</button>
+        </div>
       </div>
     </aside>
 
@@ -100,6 +110,7 @@
   <dl id="about-fields" class="about-fields"></dl>
 </dialog>
 
+<input id="import-input" type="file" accept=".json,application/json" hidden>
 <div id="drop-overlay"class="drop-overlay" hidden>Drop EPUB to open</div>
 
 <script src="zip.js"></script>

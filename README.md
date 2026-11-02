@@ -34,6 +34,7 @@ The app isn't signed, so macOS may block it the first time it's opened after dow
 - **Named bookmarks**: mark places you want to return to. You can name, rename and delete them, and jump to any of them.
 - **History**: every book you've opened, with when you last opened it, how far you've read and how many bookmarks it has. The most recent 40 books are kept in the browser and reopen with one click. For older ones you pick the file again, and your place is still remembered.
 - **About this book**: all of the book's metadata, including the cover, summary, series, tags and dates. If the book has Calibre's custom columns (for example Fandom, Relationships, Status and Words from AO3 downloads), those show too. It also gives a word count worked out from the text.
+- **Back up and restore**: export your positions, bookmarks, history and settings to a file, and import it later, for example after clearing your browser data or to move to another browser. Importing merges with what's already there.
 - **Open another book at any time**: use the Open button, or drop a new file onto the page.
 - **Comfortable reading**: adjustable text size, and light, sepia and dark themes.
 
@@ -57,6 +58,8 @@ Everything is stored in your browser, for this page only:
 - **IndexedDB** keeps copies of the 40 most recently opened files, so they can be reopened without picking them again.
 
 Each book is recognised by its source URL when it has one (such as an AO3 work link), otherwise by its EPUB identifier, otherwise by title and author. So if you download an updated version of a story, your place and bookmarks carry over. Saved data belongs to one browser: Chrome and Safari, for example, don't share it. Clearing your browser's site data for the page erases it.
+
+To keep a copy, use **Export…** at the bottom of the start screen (or **Export data…** in the History tab). It saves a small `.json` file. **Import…** restores it: the newer reading position wins for each book, and bookmarks from both are kept. The backup doesn't include the books themselves, so after a restore each book shows "pick file to reopen" until you open its file once.
 
 ## Browser support
 
