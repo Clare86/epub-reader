@@ -1,3 +1,4 @@
 .DS_Store
 ._*
 *.epub
+epub-reader-backup*.json
