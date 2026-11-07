@@ -171,12 +171,6 @@ class EpubBook {
     const ids = Array.from(opf.getElementsByTagNameNS(NS.dc, 'identifier'));
     const uidEl = ids.find(e => e.getAttribute('id') === uidId) || ids[0];
     this.meta.identifier = uidEl ? cleanText(uidEl.textContent) : '';
-    // Prefer the source URL (e.g. an AO3 work link) when there is one: it stays
-    // the same if the story is re-downloaded or re-exported.
-    const source = dc('source')[0] || ids.map(e => cleanText(e.textContent)).find(v => /^https?:\/\//.test(v)) || '';
-    this.meta.source = source;
-    this.key = source || this.meta.identifier || (this.meta.title + '|' + this.meta.authors.join(', '));
-
     this._opf = opf;
     this.version = pkg.getAttribute('version') || '';
 
@@ -192,6 +186,20 @@ class EpubBook {
       if (/\bnav\b/.test(entry.props)) navHref = path;
       if (entry.type === 'application/x-dtbncx+xml') ncxHref = path;
     }
+    this._manifest = manifest;
+
+    // Prefer the source URL (e.g. an AO3 work link) when there is one: it stays
+    // the same if the story is re-downloaded or re-exported. Sources that belong
+    // to a single image or chapter file (WebToEpub adds one per file) don't count.
+    const sources = Array.from(opf.getElementsByTagNameNS(NS.dc, 'source'));
+    const source = sources.filter(e => !this._sourceFile(e)).map(e => cleanText(e.textContent)).find(Boolean)
+      || ids.map(e => cleanText(e.textContent)).find(v => /^https?:\/\//.test(v)) || '';
+    this.meta.source = source;
+    this.key = source || this.meta.identifier || (this.meta.title + '|' + this.meta.authors.join(', '));
+    // Keys earlier versions of the reader used, so saved places can be carried over.
+    const oldSource = dc('source')[0] || ids.map(e => cleanText(e.textContent)).find(v => /^https?:\/\//.test(v)) || '';
+    const oldKey = oldSource || this.meta.identifier || (this.meta.title + '|' + this.meta.authors.join(', '));
+    this.oldKeys = oldKey !== this.key ? [oldKey] : [];
     // Cover image: EPUB 3 "cover-image" property, or EPUB 2 <meta name="cover">.
     const coverMeta = opf.querySelector('metadata meta[name="cover"]');
     const coverItem = Array.from(manifest.values()).find(m => /\bcover-image\b/.test(m.props))
@@ -327,6 +335,9 @@ class EpubBook {
           add('Tags', text, 'tags');
         } else if (name === 'description') {
           add('Summary', text, 'html');
+        } else if (name === 'source' && this._sourceFile(el)) {
+          // Where one file came from: keep the chapter pages, skip the pictures.
+          if (!/^image\//.test(this._sourceFile(el).type)) add('Chapter sources', text);
         } else {
           add(DC_LABELS[name] || name, text);
         }
@@ -355,6 +366,14 @@ class EpubBook {
       }
     }
     return Array.from(fields.values());
+  }
+
+  // The manifest file a <dc:source> describes, when its id names one
+  // (WebToEpub writes id="id.<manifest id>"); null for the book's own source.
+  _sourceFile(el) {
+    const id = el.getAttribute('id');
+    if (!id) return null;
+    return this._manifest.get(id.replace(/^id\./, '')) || null;
   }
 
   spineIndexOf(path) {

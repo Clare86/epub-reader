@@ -168,6 +168,19 @@ async function openRecord(key) {
   $('file-input').click();
 }
 
+// If an earlier version saved this book under a different key, move its
+// place, bookmarks and stored file to the current key.
+async function migrateKeys(book) {
+  for (const old of book.oldKeys || []) {
+    const data = lsGet(LS_BOOK + old, null);
+    if (!data) continue;
+    lsSet(LS_BOOK + book.key, mergeBook(lsGet(LS_BOOK + book.key, null), data));
+    localStorage.removeItem(LS_BOOK + old);
+    await idb.del(old).catch(() => {});
+    if (settings.lastKey === old) settings.lastKey = book.key;
+  }
+}
+
 async function openFile(file, name) {
   showError('');
   let book;
@@ -185,6 +198,7 @@ async function openFile(file, name) {
   state.file = file;
   window.currentBook = book; // handy for debugging in the console
 
+  await migrateKeys(book);
   const author = book.meta.authors.join(', ');
   state.data = Object.assign({ bookmarks: [], pos: null }, lsGet(LS_BOOK + book.key, {}),
     { title: book.meta.title, author, opened: Date.now(), fileName: name || file.name || '' });
@@ -717,7 +731,7 @@ function renderBookmarks() {
 
 const ABOUT_ORDER = ['Summary', 'Series', 'Number in series', 'Author', 'Fandom', 'Relationships', 'Ship Type',
   'Characters', 'Additional Tags', 'Tags', 'Rating', 'My Rating', 'Status', 'Reading Status', 'Chapters', 'Words', 'Length',
-  'Published', 'Date', 'Updated', 'Modified', 'Language', 'Source', 'Story URL'];
+  'Published', 'Date', 'Updated', 'Modified', 'Language', 'Source', 'Story URL', 'Chapter sources'];
 
 function languageName(code) {
   try { return new Intl.DisplayNames(undefined, { type: 'language' }).of(code) || code; } catch (_) { return code; }
