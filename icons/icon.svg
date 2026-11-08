@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Home-screen icon: the favicon's book on a full-bleed page-coloured square,
+       kept inside the central safe zone so Android can crop it to any shape. -->
+  <rect width="512" height="512" fill="#fbfaf7"/>
+  <g transform="translate(256 262) scale(5.6) translate(-32 -31)">
+    <path d="M32 14C25 8 14 8 6 10v42c8-2 19-2 26 4z" fill="#8a3b12"/>
+    <path d="M32 14c7-6 18-6 26-4v42c-8-2-19-2-26 4z" fill="#b2582a"/>
+    <path d="M12 20c5-1 10-1 15 1M12 28c5-1 10-1 15 1M12 36c5-1 10-1 15 1M37 21c5-2 10-2 15-1M37 29c5-2 10-2 15-1M37 37c5-2 10-2 15-1"
+          stroke="#fbfaf7" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".85"/>
+    <path d="M46 6h8v18l-4-3-4 3z" fill="#e3a36f"/>
+  </g>
+</svg>

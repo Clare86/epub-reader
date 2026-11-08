@@ -2,11 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>EPUB Reader</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- Installing to a phone's home screen -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#fbfaf7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EPUB Reader">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <!-- ?v= makes browsers fetch fresh copies after an update; change it whenever these files change. -->
-<link rel="stylesheet" href="style.css?v=2026-11-03a">
+<link rel="stylesheet" href="style.css?v=2026-11-08a">
 </head>
 <body>
 
@@ -126,9 +134,10 @@
 
 <input id="import-input" type="file" accept=".json,application/json" hidden>
 <div id="drop-overlay"class="drop-overlay" hidden>Drop EPUB to open</div>
+<div id="update-bar" class="update-bar" hidden>A new version of the reader is ready. <button id="btn-update">Reload</button></div>
 
-<script src="zip.js?v=2026-11-03a"></script>
-<script src="epub.js?v=2026-11-03a"></script>
-<script src="reader.js?v=2026-11-03a"></script>
+<script src="zip.js?v=2026-11-08a"></script>
+<script src="epub.js?v=2026-11-08a"></script>
+<script src="reader.js?v=2026-11-08a"></script>
 </body>
 </html>

@@ -22,7 +22,18 @@ Some browsers limit storage for pages opened straight from a file (`file://`). I
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-Then open http://127.0.0.1:8000/. Only your own computer can reach it.
+Then open http://127.0.0.1:8000/. Only your own computer can reach it. Served this way, the reader uses its offline copy (see below), so after editing its files, change `VERSION` in `sw.js` and reload twice to see them.
+
+### Installing it on a phone or tablet
+
+The online version can be installed like an app. It then opens full screen from its own icon, and works without an internet connection.
+
+- **iPhone or iPad (Safari):** open the link, tap **Share**, then **Add to Home Screen**.
+- **Android (Chrome):** open the link, tap the **⋮** menu, then **Install app** (or **Add to Home screen**).
+
+On an iPhone or iPad, the installed app keeps its own reading positions, bookmarks and history, separate from Safari's. To carry them over, use **Export…** in Safari and **Import…** in the app. Android shares them with Chrome.
+
+When a new version of the reader is published, a bar offers to reload into it.
 
 ### Adding it to the Dock (macOS)
 
@@ -63,6 +74,7 @@ Everything is stored in your browser, for this page only:
 
 - **localStorage** keeps settings, plus each book's reading position, bookmarks and last-opened time.
 - **IndexedDB** keeps copies of the 40 most recently opened files, so they can be reopened without picking them again.
+- **A service worker** keeps a copy of the reader's own files (not your books) so it opens offline. This only applies when the reader is loaded from a web address. A copy opened straight from the file (including through the Dock launcher) doesn't use one.
 
 Each book is recognised by its source URL when it has one (such as an AO3 work link), otherwise by its EPUB identifier, otherwise by title and author. So if you download an updated version of a story, your place and bookmarks carry over. Saved data belongs to one browser: Chrome and Safari, for example, don't share it. The online version and a downloaded copy also keep separate data; use Export and Import to move it between them. Clearing your browser's site data for the page erases it.
 
@@ -89,6 +101,8 @@ The reader needs a reasonably recent browser: Chrome or Edge 105+, Safari 16.4+,
 | `epub.js` | Reads metadata, chapters and table of contents; cleans chapter HTML |
 | `reader.js` | The interface, position saving, bookmarks and history |
 | `favicon.svg` | Browser tab icon |
+| `manifest.webmanifest`, `icons/` | Name and icons for installing to a home screen |
+| `sw.js` | Service worker: keeps the reader's files for offline use. Change its `VERSION` whenever any file changes. |
 | `EPUB Reader.app` | Optional macOS launcher for the Dock |
 
 ## License

@@ -220,6 +220,7 @@ async function openFile(file, name) {
   $('book-author').textContent = author;
   $('library').hidden = true;
   $('reader').hidden = false;
+  if (!(history.state && history.state.reader)) history.pushState({ reader: true }, '');
   state.words = null;
   state.search = null;
   $('search-input').value = '';
@@ -1001,6 +1002,8 @@ function applyAppearance() {
   document.documentElement.dataset.theme = settings.theme;
   $('theme-name').textContent = settings.theme[0].toUpperCase() + settings.theme.slice(1);
   document.documentElement.style.setProperty('--font-size', settings.fontSize + 'px');
+  // Phones colour the status bar to match.
+  document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
 }
 
 async function switchMode(mode) {
@@ -1068,7 +1071,21 @@ $('mode-chapter').addEventListener('click', () => switchMode('chapter'));
 $('mode-whole').addEventListener('click', () => switchMode('whole'));
 $('btn-prev').addEventListener('click', () => stepChapter(-1));
 $('btn-next').addEventListener('click', () => stepChapter(1));
-$('btn-close').addEventListener('click', () => closeBook());
+// Going back closes the book (see popstate below), so the history entry
+// added on opening it doesn't linger.
+$('btn-close').addEventListener('click', () => (history.state && history.state.reader) ? history.back() : closeBook());
+
+// A phone's back gesture (or the browser's Back button) closes whatever is on
+// top first (the about box, the menu, the sidebar on a phone) and then the
+// book, instead of leaving the app.
+window.addEventListener('popstate', () => {
+  if (!state.book) return;
+  if ($('about').open) $('about').close();
+  else if ($('reader').classList.contains('menu-open')) setMenu(false);
+  else if (settings.sidebar && window.matchMedia('(max-width: 760px)').matches) setSidebar(false);
+  else { closeBook(); return; }
+  history.pushState({ reader: true }, '');
+});
 $('btn-open').addEventListener('click', () => $('file-input').click());
 $('btn-about').addEventListener('click', openAbout);
 $('about-close').addEventListener('click', () => $('about').close());
@@ -1145,6 +1162,31 @@ document.addEventListener('keydown', (e) => {
 
 window.addEventListener('pagehide', savePosition);
 document.addEventListener('visibilitychange', () => { if (document.hidden) savePosition(); });
+
+// ---------- installable app ----------
+
+// The service worker (sw.js) keeps the app's files for offline use. Browsers
+// don't allow one on file:// pages (the Dock launcher), which work as before.
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  const hadWorker = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').then((reg) => {
+    // A new version installed alongside the running one: offer to switch.
+    const offer = () => { if (reg.waiting && navigator.serviceWorker.controller) $('update-bar').hidden = false; };
+    offer();
+    reg.addEventListener('updatefound', () => {
+      const w = reg.installing;
+      w.addEventListener('statechange', () => { if (w.state === 'installed') offer(); });
+    });
+    $('btn-update').addEventListener('click', () => {
+      savePosition();
+      if (reg.waiting) reg.waiting.postMessage('update'); else location.reload();
+    });
+    // Installed apps can stay open for days; look for updates on returning to it.
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+  }).catch(e => console.warn('Service worker not registered', e));
+  // Reload once the new version takes over (not on the very first install).
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadWorker) location.reload(); });
+}
 
 // ---------- start ----------
 
