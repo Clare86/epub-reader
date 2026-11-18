@@ -622,7 +622,7 @@ function onScroll() {
     state.pos = pos;
     $('progress-bar').style.width = `${(pos.pct * 100).toFixed(2)}%`;
     const title = state.book.spine[pos.ch].title;
-    setStatus(`${title} · ${Math.round(pos.pct * 100)}%`);
+    setStatus(title, Math.round(pos.pct * 100));
     highlightToc(pos.ch);
     clearTimeout(saveTimer);
     saveTimer = setTimeout(savePosition, 400);
@@ -637,7 +637,12 @@ function savePosition() {
   persistBook();
 }
 
-function setStatus(t) { $('status').textContent = t ? `· ${t}` : ''; }
+// The percentage has its own span so a long chapter title is cut short
+// instead of hiding it.
+function setStatus(t, pct) {
+  $('status').textContent = t ? `\u00a0· ${t}` : '';
+  $('status-pct').textContent = pct != null ? `\u00a0· ${pct}%` : '';
+}
 
 let toastTimer = null;
 function toast(msg) {

@@ -4,7 +4,7 @@
 //
 // Change VERSION whenever any of FILES change. Open pages then show a
 // "new version" bar, and the new files are used once it's tapped.
-const VERSION = '2026-11-08a';
+const VERSION = '2026-11-18a';
 const CACHE = 'epub-reader-' + VERSION;
 const FILES = [
   './',

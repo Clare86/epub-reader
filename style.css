@@ -95,9 +95,11 @@ input[type="search"] {
 }
 .icon-btn { border-color: transparent; min-width: 34px; padding: 4px 8px; }
 .book-heading { flex: 1; min-width: 0; padding: 0 6px; }
-.book-title, .book-author { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-title, .book-author, .book-author > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .book-title { font-weight: 600; }
-.book-author { font-size: 13px; }
+.book-author { font-size: 13px; display: flex; }
+.book-author > span { min-width: 0; }
+#status-pct { flex-shrink: 0; overflow: visible; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
 .seg-btn { border: 0; border-radius: 0; padding: 4px 10px; }
 .seg-btn + .seg-btn { border-left: 1px solid var(--line); }
