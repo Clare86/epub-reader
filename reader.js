@@ -1198,7 +1198,27 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 applyAppearance();
 setSidebar(settings.sidebar);
 refreshRecent();
-if (settings.lastKey) {
+// A book shared from another Android app (see receiveShare in sw.js) waits
+// in the cache. Returns false if there wasn't one.
+async function openShared() {
+  history.replaceState(history.state, '', location.pathname); // so a reload doesn't look again
+  if (!window.caches) return false;
+  const res = await caches.match('book', { cacheName: 'shared-file' });
+  if (!res) return false;
+  const blob = await res.blob();
+  await caches.delete('shared-file');
+  const name = decodeURIComponent(res.headers.get('X-File-Name') || 'Shared book.epub');
+  await openFile(new File([blob], name, { type: 'application/epub+zip' }), name);
+  return true;
+}
+
+function reopenLast() {
   // Reopen the book that was open when the tab was closed.
-  idb.get(settings.lastKey).then(rec => rec && openFile(rec.file, rec.name)).catch(() => {});
+  if (settings.lastKey) idb.get(settings.lastKey).then(rec => rec && openFile(rec.file, rec.name)).catch(() => {});
+}
+
+if (new URLSearchParams(location.search).has('shared')) {
+  openShared().then(found => { if (!found) reopenLast(); }).catch(reopenLast);
+} else {
+  reopenLast();
 }

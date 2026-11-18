@@ -33,6 +33,8 @@ The online version can be installed like an app. It then opens full screen from 
 
 On an iPhone or iPad, the installed app keeps its own reading positions, bookmarks and history, separate from Safari's. To carry them over, use **Export…** in Safari and **Import…** in the app. Android shares them with Chrome.
 
+On Android, once installed, the reader appears in the **Share** menu. Share an `.epub` from Files, Downloads, Drive or an email attachment and choose **EPUB Reader** to open it straight away. The file is kept on the phone, just as if you'd picked it. (iPhones and iPads don't let web apps join the Share menu, so use **Open** there.) If the reader was installed before this was added, Android may take a day to notice; removing and reinstalling it makes it appear at once.
+
 When a new version of the reader is published, a bar offers to reload into it.
 
 ### Adding it to the Dock (macOS)

@@ -4,8 +4,11 @@
 //
 // Change VERSION whenever any of FILES change. Open pages then show a
 // "new version" bar, and the new files are used once it's tapped.
-const VERSION = '2026-11-18a';
+const VERSION = '2026-11-18b';
 const CACHE = 'epub-reader-' + VERSION;
+// Holds a book shared from another Android app until the page picks it up.
+// (Its name doesn't start with "epub-reader-", so updates don't delete it.)
+const SHARE_CACHE = 'shared-file';
 const FILES = [
   './',
   'index.html',
@@ -36,9 +39,32 @@ self.addEventListener('message', (e) => {
   if (e.data === 'update') self.skipWaiting();
 });
 
+// Android's Share menu (see share_target in the manifest) posts the file
+// here. It's kept on the device and the app opens with ?shared, which loads
+// it. Nothing is sent anywhere.
+async function receiveShare(req) {
+  try {
+    const files = (await req.formData()).getAll('book').filter(f => f instanceof File);
+    const file = files.find(f => /\.epub$/i.test(f.name)) || files[0];
+    if (file) {
+      const cache = await caches.open(SHARE_CACHE);
+      await cache.put('book', new Response(file, {
+        headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(file.name || 'Shared book.epub') },
+      }));
+    }
+  } catch (err) {
+    console.warn('Could not receive shared file', err);
+  }
+  return Response.redirect(new URL('./?shared', self.registration.scope).href, 303);
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   const url = new URL(req.url);
+  if (req.method === 'POST' && url.origin === location.origin && url.pathname.endsWith('/share-target')) {
+    e.respondWith(receiveShare(req));
+    return;
+  }
   if (req.method !== 'GET' || url.origin !== location.origin) return;
   // The app page always gets the cached copy; files match whatever their ?v= tag.
   const isApp = req.mode === 'navigate' && /\/(index\.html)?$/.test(url.pathname);
