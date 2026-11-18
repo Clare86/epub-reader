@@ -12,7 +12,7 @@ To use it without going online, or to keep a copy of your own:
 
 1. Download this repository (**Code → Download ZIP**, then unzip it) or clone it.
 2. Open `index.html` in your browser by double-clicking it, or by dragging it onto a browser window.
-3. Drop an `.epub` file onto the page, or click to choose one.
+3. Drop an `.epub` file onto the page, or click to choose one. Or try one of the sample books (see below).
 
 ### If your progress isn't being saved
 
@@ -42,6 +42,12 @@ When a new version of the reader is published, a bar offers to reload into it.
 `EPUB Reader.app` is a tiny launcher that opens `index.html` in your default browser. Drag it to the Dock to keep it there. It looks for `index.html` in the same folder, so keep the two together.
 
 The app isn't signed, so macOS may block it the first time it's opened after downloading. If it does, right-click the app and choose **Open**. Or go to **System Settings → Privacy & Security** and click **Open Anyway**.
+
+## Sample books
+
+To try the reader without finding a book first, the start screen offers three classics: *A Study in Scarlet*, *A Little Princess* and *Heidi*. They're free public-domain ebooks from [Standard Ebooks](https://standardebooks.org/), kept unchanged in the `samples` folder. A sample is downloaded from the reader's own site only when you open it, then kept like any other book.
+
+Browsers don't let a page opened straight from a file (including through the Dock launcher) load files beside it, so the samples only appear when the reader is online or served locally.
 
 ## Features
 
@@ -103,10 +109,11 @@ The reader needs a reasonably recent browser: Chrome or Edge 105+, Safari 16.4+,
 | `epub.js` | Reads metadata, chapters and table of contents; cleans chapter HTML |
 | `reader.js` | The interface, position saving, bookmarks and history |
 | `favicon.svg` | Browser tab icon |
+| `samples/` | Sample books from Standard Ebooks, and small copies of their covers |
 | `manifest.webmanifest`, `icons/` | Name and icons for installing to a home screen |
 | `sw.js` | Service worker: keeps the reader's files for offline use. Change its `VERSION` whenever any file changes. |
 | `EPUB Reader.app` | Optional macOS launcher for the Dock |
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The sample books are from [Standard Ebooks](https://standardebooks.org/). They're believed to be in the US public domain, and Standard Ebooks' own work on them is dedicated to the public domain under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).

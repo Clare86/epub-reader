@@ -4,7 +4,7 @@
 //
 // Change VERSION whenever any of FILES change. Open pages then show a
 // "new version" bar, and the new files are used once it's tapped.
-const VERSION = '2026-11-18b';
+const VERSION = '2026-11-18c';
 const CACHE = 'epub-reader-' + VERSION;
 // Holds a book shared from another Android app until the page picks it up.
 // (Its name doesn't start with "epub-reader-", so updates don't delete it.)
@@ -21,6 +21,11 @@ const FILES = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
+  // Sample book covers for the start screen (the books themselves are only
+  // downloaded when opened).
+  'samples/covers/arthur-conan-doyle_a-study-in-scarlet.jpg',
+  'samples/covers/frances-hodgson-burnett_a-little-princess.jpg',
+  'samples/covers/johanna-spyri_heidi_elisabeth-p-stork.jpg',
 ];
 
 self.addEventListener('install', (e) => {

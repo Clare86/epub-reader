@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="EPUB Reader">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <!-- ?v= makes browsers fetch fresh copies after an update; change it whenever these files change. -->
-<link rel="stylesheet" href="style.css?v=2026-11-18b">
+<link rel="stylesheet" href="style.css?v=2026-11-18c">
 </head>
 <body>
 
@@ -29,6 +29,16 @@
       <span class="muted">or click to choose a file</span>
     </label>
     <p id="open-error" class="error" hidden></p>
+    <!-- Hidden on file:// pages, where browsers won't let the page load these files. -->
+    <div id="samples" class="samples" hidden>
+      <h2>Or try a sample book</h2>
+      <ul class="sample-list">
+        <li><button class="sample" data-file="samples/arthur-conan-doyle_a-study-in-scarlet.epub" title="Open A Study in Scarlet by Arthur Conan Doyle"><img src="samples/covers/arthur-conan-doyle_a-study-in-scarlet.jpg" alt="" width="90" height="135"><span class="s-title">A Study in Scarlet</span><span class="s-author">Arthur Conan Doyle</span></button></li>
+        <li><button class="sample" data-file="samples/frances-hodgson-burnett_a-little-princess.epub" title="Open A Little Princess by Frances Hodgson Burnett"><img src="samples/covers/frances-hodgson-burnett_a-little-princess.jpg" alt="" width="90" height="135"><span class="s-title">A Little Princess</span><span class="s-author">Frances Hodgson Burnett</span></button></li>
+        <li><button class="sample" data-file="samples/johanna-spyri_heidi_elisabeth-p-stork.epub" title="Open Heidi by Johanna Spyri"><img src="samples/covers/johanna-spyri_heidi_elisabeth-p-stork.jpg" alt="" width="90" height="135"><span class="s-title">Heidi</span><span class="s-author">Johanna Spyri</span></button></li>
+      </ul>
+      <p class="small muted">Free public-domain ebooks from <a href="https://standardebooks.org/" target="_blank" rel="noopener noreferrer">Standard Ebooks</a>.</p>
+    </div>
     <div class="backup small muted">
       <span>Back up your reading positions, bookmarks and history:</span>
       <button class="btn-export" title="Save reading data to a file">Export…</button>
@@ -136,8 +146,8 @@
 <div id="drop-overlay"class="drop-overlay" hidden>Drop EPUB to open</div>
 <div id="update-bar" class="update-bar" hidden>A new version of the reader is ready. <button id="btn-update">Reload</button></div>
 
-<script src="zip.js?v=2026-11-18b"></script>
-<script src="epub.js?v=2026-11-18b"></script>
-<script src="reader.js?v=2026-11-18b"></script>
+<script src="zip.js?v=2026-11-18c"></script>
+<script src="epub.js?v=2026-11-18c"></script>
+<script src="reader.js?v=2026-11-18c"></script>
 </body>
 </html>

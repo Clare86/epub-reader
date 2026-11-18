@@ -1193,6 +1193,32 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadWorker) location.reload(); });
 }
 
+// ---------- sample books ----------
+
+// Books shipped in samples/ (from Standard Ebooks). They're fetched from this
+// site only when chosen, then kept like any other opened book.
+if (location.protocol !== 'file:') {
+  $('samples').hidden = false;
+  for (const btn of document.querySelectorAll('.sample')) {
+    btn.addEventListener('click', async () => {
+      const url = btn.dataset.file;
+      const name = url.split('/').pop();
+      btn.disabled = true;
+      btn.classList.add('loading');
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`the server answered ${res.status}`);
+        await openFile(new File([await res.blob()], name, { type: 'application/epub+zip' }), name);
+      } catch (e) {
+        showError(`Couldn't load the sample book: ${e.message}. Check your connection and try again.`);
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      }
+    });
+  }
+}
+
 // ---------- start ----------
 
 applyAppearance();
